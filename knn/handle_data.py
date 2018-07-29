@@ -7,6 +7,8 @@ from sklearn.decomposition import PCA
 from sklearn.decomposition import KernelPCA
 from scipy import sparse
 import heapq
+import math
+import sys
 
 
 def loadData(file_name):
@@ -233,12 +235,34 @@ def oversampling_nn(rate, target_rate, num_of_nn, num_of_minority, knn_list, knn
         # print(rate)
 
 
+# def undersamling_nn(rate, target_rate, num_of_nn, num_of_minority, knn_list, knn_label_list, final_knn_list, distance_matric):
+#     while rate > target_rate:
+#         index = random.randint(0, len(final_knn_list)-1)
+#         del final_knn_list[index]
+#         rate = len(final_knn_list) / num_of_minority
+#         # print(rate)
+
+
 def undersamling_nn(rate, target_rate, num_of_nn, num_of_minority, knn_list, knn_label_list, final_knn_list, distance_matric):
-    while rate > target_rate:
-        index = random.randint(0, len(final_knn_list)-1)
-        del final_knn_list[index]
-        rate = len(final_knn_list) / num_of_minority
-        # print(rate)
+    num = math.ceil(num_of_minority * target_rate)
+    final_knn_distance = []
+    for index in final_knn_list:
+        label = []
+        # print(knn_label_list[index])
+        for each in range(len(knn_label_list[index])):
+            if knn_label_list[index][each] == 1:
+                label.append(each)
+        nn = knn_list[index].take(label)
+        nn = nn.tolist()
+        distance = distance_matric[index].take(nn)
+        nn_index = heapq.nsmallest(1, range(len(distance)), distance.take)
+        final_knn_distance.append(distance[nn_index[0]])
+    final_knn_distance = np.array(final_knn_distance)
+    the_index = heapq.nsmallest(num, range(len(final_knn_distance)), final_knn_distance.take)
+    final_knn_list = np.array(final_knn_list)
+    final_knn_list = final_knn_list.take(the_index)
+    final_knn_list = final_knn_list.tolist()
+
 
 
 
