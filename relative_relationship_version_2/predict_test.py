@@ -110,7 +110,7 @@ def record_rank_reference(reference, rank, predict_rank, record):
     record_middle_result('the predict rank is   ', predict_rank, record)
 
 
-def group_test(Data, Label, Ds, Dl, train_index_start, num_of_train, model, threshold_value, top, all_group_top_precision, all_group_top_exact_accuracy, all_group_exact_accuracy, record):
+def group_test(Data, Label, Ds, Dl, num_of_train, model, threshold_value, top, all_group_top_precision, all_group_top_exact_accuracy, all_group_exact_accuracy, record):
     for group_index_start in range(num_of_train,len(Ds)):
         group_start = Ds[group_index_start]
         length = Dl[group_index_start]

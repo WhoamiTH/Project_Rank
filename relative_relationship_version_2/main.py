@@ -38,10 +38,9 @@ def crossvalidation(percent, Ds, Dl, Data, Label, record):
         all_group_top_exact_accuracy = []
         all_group_exact_accuracy = []
         start = clock()
-        train_index_start,train_x,train_y = handle_data.generate_primal_train_data(Data,Label,Ds,Dl,num_of_train)
+        train_x,train_y = handle_data.generate_primal_train_data(Data,Label,Ds,Dl,num_of_train)
         new_data = handle_data.standarize_PCA_data(train_x, Data, pca_or_not, kernelpca_or_not, num_of_components)
-
-        train_data,train_label,test_data,test_label= handle_data.generate_all_data(Ds, Dl, new_data, Label, train_index_start, num_of_train, mirror_type, positive_value, negative_value)
+        train_data,train_label,test_data,test_label= handle_data.generate_all_data(Ds, Dl, new_data, Label, num_of_train, mirror_type, positive_value, negative_value)
         model,training_time = train_model(train_data, train_label, test_data, test_label)
         finish = clock()
         print(model)
@@ -51,7 +50,7 @@ def crossvalidation(percent, Ds, Dl, Data, Label, record):
         record.write("-------------------------------------------------------------------------------------------\n")
         # predict_test.general_test(test_data, test_label, model, positive_value, negative_value, threshold_value, record)
         all_group_top_precision, all_group_top_exact_accuracy, all_group_exact_accuracy = \
-            predict_test.group_test(new_data, Label, Ds, Dl, train_index_start, num_of_train, model, threshold_value,
+            predict_test.group_test(new_data, Label, Ds, Dl, num_of_train, model, threshold_value,
                                     top, all_group_top_precision, all_group_top_exact_accuracy, all_group_exact_accuracy, record)
         running_time = finish-start
         predict_test.cal_average(all_group_top_precision, all_group_top_exact_accuracy, all_group_exact_accuracy, record)
@@ -139,7 +138,7 @@ percentage = 0
 
 # ----------------------------------set parameters--------------------------------------------------------------------
 set_para()
-file_name = 'GData.csv'
+file_name = 'GData_new.csv'
 path = model_type
 
 # ----------------------------------start processing--------------------------------------------------------------------

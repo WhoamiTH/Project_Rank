@@ -106,13 +106,32 @@ def handleData_extend_mirror(Data, Label, start, length, positive_value, negativ
     for j in range(length):
         for t in range(length):
             if j != t:
-                if 
-                temd.append(data_extend(Data[start + j], Data[start + t]))
-                if Label[start + j] > Label[start + t]:
-                    # teml.append([-1])
-                    teml.append([negative_value])
-                else:
-                    teml.append([positive_value])
+                if Label[start + j] != Label[start + t]:
+                    temd.append(data_extend(Data[start + j], Data[start + t]))
+                    if Label[start + j] > Label[start + t]:
+                        # teml.append([-1])
+                        teml.append([negative_value])
+                    else:
+                        teml.append([positive_value])
+    return temd, teml
+
+
+
+def handleData_extend_mirror_probability(Data, Label, start, length, positive_value, negative_value):
+    temd = []
+    teml = []
+    for j in range(length):
+        for t in range(length):
+            if j != t:
+                if Label[start + j] != Label[start + t]:
+                    prob = random.random()
+                    if prob > 0.5:
+                        temd.append(data_extend(Data[start + j], Data[start + t]))
+                        if Label[start + j] > Label[start + t]:
+                            # teml.append([-1])
+                            teml.append([negative_value])
+                        else:
+                            teml.append([positive_value])
     return temd, teml
 
 
@@ -129,7 +148,7 @@ def handleData_extend_not_mirror(Data, Label, start, length, positive_value, neg
     return temd, teml
 
 
-def generate_all_data(Ds, Dl, Data, Label, train_index_start, num_of_train, mirror_type, positive_value, negative_value):
+def generate_all_data(Ds, Dl, Data, Label, num_of_train, mirror_type, positive_value, negative_value):
     tem_data_train = []
     tem_label_train = []
     tem_data_test = []
@@ -207,22 +226,28 @@ def initlist():
     gr = []
     ga = []
     agtp = []
+    agr = []
     agtea = []
     aga = []
     tt = []
     rt = []
-    return gp,gr,ga,agtp,agtea,aga,tt,rt
+    return gp,gr,ga,agtp,agr,agtea,aga,tt,rt
 
 def aver(l):
-    return sum(l)/len(l)
+    if len(l) == 0:
+        return 0
+    else:
+        return sum(l)/len(l)
 
 def scan_file(file_name):
     f = open(file_name,'r')
-    gp,gr,ga,agtp,agtea,aga,tt,rt = initlist()
+    gp,gr,ga,agtp,agr,agtea,aga,tt,rt = initlist()
     for i in f:
         word,num = divide_alpha_digit(i)
         if word == 'the average group top precision is ':
             agtp.append(num)
+        if word == 'the average group recall is ':
+            agr.append(num)
         if word == 'the average group top exact accuracy is ':
             agtea.append(num)
         if word == 'the average group accuracy is ':
@@ -232,21 +257,24 @@ def scan_file(file_name):
         if word == 'the  time running time is ':
             rt.append(float(str(num)[1:-1]))
     av_aptp = aver(agtp)
+    av_agr = aver(agr)
     av_agtea = aver(agtea)
     av_aga = aver(aga)
     av_tt = aver(tt)
     av_rt = aver(rt)
-    return av_aptp,av_agtea,av_aga,av_tt,av_rt
+    return av_aptp, av_agr, av_agtea,av_aga,av_tt,av_rt
 
 def append_file(file_name):
-    av_aptp, av_agtea, av_aga, av_tt, av_rt = scan_file(file_name)
+    av_agtp, av_agr, av_agtea, av_aga, av_tt, av_rt = scan_file(file_name)
+    fscore = (2 * av_agtp * av_agr) / (av_agtp + av_agr)
     f = open(file_name,'a')
-    f.write("the average group top precision is {0}\n".format(av_aptp))
+    f.write("the F-score is {0}\n".format(fscore))
+    f.write("the average group top precision is {0}\n".format(av_agtp))
+    f.write("the average group recall is {0}\n".format(av_agr))
     f.write("the average group top exact accuracy is {0}\n".format(av_agtea))
     f.write("the average group accuracy is {0}\n".format(av_aga))
     f.write("the 3 time training time is {0}\n".format(av_tt))
     f.write("the 3 time running time is {0}\n".format(av_rt))
     f.close()
-
 
 
