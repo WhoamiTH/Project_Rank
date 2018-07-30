@@ -249,3 +249,6 @@ def append_file(file_name):
     f.write("the 3 time training time is {0}\n".format(av_tt))
     f.write("the 3 time running time is {0}\n".format(av_rt))
     f.close()
+
+
+
