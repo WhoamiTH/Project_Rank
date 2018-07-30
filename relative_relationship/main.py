@@ -15,7 +15,8 @@ def train_model(train_data, train_label, test_data, test_label):
         model = sklin.LogisticRegression()
         model.fit(train_data,train_label.flatten())
     if model_type == 'SVC':
-        model = sksvm.SVC(C=0.1,kernel='rbf')
+        model = sksvm.SVC(C=0.1,kernel='linear')
+        # model = sksvm.SVC(C=0.1,kernel='rbf')
         # model = sksvm.SVC(C=0.1,kernel='poly')
         model.fit(train_data, train_label.flatten())
     if model_type == 'DT':
@@ -32,9 +33,14 @@ def crossvalidation(percent, Ds, Dl, Data, Label, record):
     global negative_value
     global threshold_value
     global mirror_type
+    #-------------------------------------------------------
+    global result_number
+    global winner_number
+    #-------------------------------------------------------
     num_of_train = math.ceil(len(Ds) * percent)
     for i in range(rep_times):
         all_group_top_precision = []
+        all_group_recall = []
         all_group_top_exact_accuracy = []
         all_group_exact_accuracy = []
         start = clock()
@@ -47,27 +53,21 @@ def crossvalidation(percent, Ds, Dl, Data, Label, record):
         record.write(str(model) + "\n")
         record.write("-------------------------------------------------------------------------------------------\n")
         # predict_test.general_test(test_data, test_label, model, positive_value, negative_value, threshold_value, record)
-        all_group_top_precision, all_group_top_exact_accuracy, all_group_exact_accuracy = \
+        all_group_top_precision, all_group_recall, all_group_top_exact_accuracy, all_group_exact_accuracy = \
             predict_test.group_test(new_data, Label, Ds, Dl, train_index_start, num_of_train, model, threshold_value,
-                                    top, all_group_top_precision, all_group_top_exact_accuracy, all_group_exact_accuracy, record)
+                                    result_number, winner_number, all_group_top_precision, all_group_recall, all_group_top_exact_accuracy, all_group_exact_accuracy, record)
         running_time = finish-start
-        predict_test.cal_average(all_group_top_precision, all_group_top_exact_accuracy, all_group_exact_accuracy, record)
+        predict_test.cal_average(all_group_top_precision, all_group_recall, all_group_top_exact_accuracy, all_group_exact_accuracy, record)
         record.write("the {0} time training time is {1}\n".format(i+1,training_time))
         record.write("the {0} time running time is {1}\n".format(i+1,running_time))
         record.write("-------------------------------------------------------------------------------------------\n\n\n")
 
-def process(record_name, percent, Ds, Dl, Data, Label):
-    record = open(record_name, 'w')
-    print("the percentage of training data is {0}".format(percent))
-    crossvalidation(percent, Ds, Dl, Data, Label, record)
-    record.close()
-    handle_data.append_file(record_name)
-    print("\n\n\n")
+
 
 
 def set_para():
     global model_type
-    # global mirror_type
+    global mirror_type
     # global top
     # global rep_times
     # global positive_value
@@ -76,15 +76,14 @@ def set_para():
     global kernelpca_or_not
     global pca_or_not
     global num_of_components
-    global percentage
 
     argv = sys.argv[1:]
     for each in argv:
         para = each.split('=')
         if para[0] == 'model_type':
             model_type = para[1].upper()
-        # if para[0] == 'mirror_type':
-        #     mirror_type = para[1]
+        if para[0] == 'mirror_type':
+            mirror_type = para[1]
         # if para[0] == 'top':
         #     top = int(para[1])
         # if para[0] == 'rep_times':
@@ -107,8 +106,6 @@ def set_para():
                 pca_or_not = False
         if para[0] == 'num_of_components':
             num_of_components = int(para[1])
-        if para[0] == 'percentage':
-            percentage = int(para[1])
     if kernelpca_or_not and pca_or_not:
         pca_or_not = True
         kernelpca_or_not = False
@@ -124,46 +121,43 @@ model_type = 'LR'
 # model_type = 'DT'
 # mirror_type = "mirror"
 mirror_type = "not_mirror"
-top = 3
+# top = 3
+#------------------------
+result_number = 8
+winner_number = 3
+#------------------------
 rep_times = 3
 positive_value = 1
 negative_value = -1
 threshold_value = 0
 kernelpca_or_not = False
-pca_or_not = False
+pca_or_not = True
 num_of_components = 20
-percentage = 0
+
 
 # ----------------------------------set parameters--------------------------------------------------------------------
 set_para()
 file_name = 'GData.csv'
-path = model_type
+path = model_type + '_' + mirror_type + '_result_percent_'
 
 # ----------------------------------start processing--------------------------------------------------------------------
 data, label = handle_data.loadData(file_name)
 dicstart, diclength = handle_data.group(data)
 
-record_name = path
-
-
-if percentage != 0:
-    record_name += '_result_percent_' + str(percentage)
-    if pca_or_not:
-        record_name += '_pca_' + str(num_of_components)
-    if kernelpca_or_not:
-        record_name += '_kernel_pca_' + str(num_of_components)
+for i in range(1,10):
+    percent = i/10
+    # percent = 0.9
+    # record_name = path + str(percent) + '_' + str(i) + '.txt'
+    record_name = path + str(percent) + '_'
+    if pca_or_not :
+        record_name += 'pca_' + str(num_of_components)
+    if kernelpca_or_not :
+        record_name += 'kernel_pca_' + str(num_of_components)
     record_name += '.txt'
-    process(record_name, percentage, dicstart, diclength, data, label)
-else:
-    for i in range(1,10):
-        percentage = i/10
-        # percent = 0.9
-        # record_name = path + str(percent) + '_' + str(i) + '.txt'
-        record_name += '_result_percent_' + str(percentage)
-        if pca_or_not:
-            record_name += '_pca_' + str(num_of_components)
-        if kernelpca_or_not:
-            record_name += '_kernel_pca_' + str(num_of_components)
-        record_name += '.txt'
-        process(record_name, percentage, dicstart, diclength, data, label)
-        record_name = path
+    record = open(record_name,'w')
+    print("the percentage of training data is {0}".format(percent))
+    crossvalidation(percent, dicstart, diclength, data, label, record)
+    record.close()
+    handle_data.append_file(record_name)
+    print("\n\n\n")
+    record.close()
